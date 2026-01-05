@@ -1,12 +1,14 @@
 <script setup lang="ts">
 import type { FavoriteResult } from '~/types'
 import { computed, ref } from 'vue'
+import MarkdownRenderer from '~/components/MarkdownRenderer.vue'
 
 const props = defineProps<{
   item: FavoriteResult
   // hide result by adding expand button on mobile
   isMobile: boolean
 }>()
+
 const emit = defineEmits(['delete'])
 
 const expanded = ref(false)
@@ -75,7 +77,6 @@ function formatTime(ts: number) {
       border="~ base rounded"
       bg="light dark:dark"
       text="left base"
-      whitespace-pre-wrap
       select-text w-full
       :class="[
         shouldExpand
@@ -90,7 +91,7 @@ function formatTime(ts: number) {
         @click="expanded = !expanded"
       />
       <Transition name="fade">
-        <span v-if="shouldExpand"> {{ props.item.result }}</span>
+        <MarkdownRenderer v-if="shouldExpand" :content="props.item.result" />
       </Transition>
     </div>
   </div>

@@ -10,6 +10,7 @@ import { computed, ref } from 'vue'
 import Button from '~/components/Button.vue'
 import ButtonSelect from '~/components/ButtonSelect.vue'
 import ImageUploader from '~/components/ImageUploader.vue'
+import MarkdownRenderer from '~/components/MarkdownRenderer.vue'
 import Select from '~/components/Select.vue'
 import { fileToBase64, generateContent, googleApiKey, modelOptions, uploadFileToAPI } from '~/logic'
 import { defaultConcisePrompt, defaultDetailedPrompt, defaultNovelPrompt } from '~/logic/prompts'
@@ -225,9 +226,9 @@ function handleSaveButtonClick() {
     p="x-4 y-3" select-text
     border="~ base hover-base rounded"
     bg="light dark:dark"
-    whitespace-pre-wrap text-left
+    text-left
   >
-    {{ result }}
+    <MarkdownRenderer :content="result" />
   </div>
   <div v-show="result !== ''">
     <div py-2 />
