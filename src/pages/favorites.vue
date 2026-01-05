@@ -80,6 +80,9 @@ function onExportAll() {
   if (!favoriteResults.data.value || favoriteResults.data.value.length === 0) {
     return
   }
+  if (!confirm('确定要导出所有收藏吗？')) {
+    return
+  }
   const data = JSON.stringify(favoriteResults.data.value, null, 2)
   const blob = new Blob([data], { type: 'application/json' })
   const url = URL.createObjectURL(blob)
@@ -93,6 +96,9 @@ function onExportAll() {
 const fileInputRef = ref<HTMLInputElement | null>(null)
 
 function onImportClick() {
+  if (!confirm('确定要导入收藏吗？已存在的收藏不会被覆盖。')) {
+    return
+  }
   fileInputRef.value?.click()
 }
 

@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { useStorage } from '@vueuse/core'
 import { nextTick, ref } from 'vue'
+import Button from '~/components/Button.vue'
 import Input from '~/components/Input.vue'
 import Textarea from '~/components/Textarea.vue'
 import { addModel, modelOptions, removeModel, resetModelOptions, updateModel } from '~/logic'
@@ -106,6 +107,74 @@ function handleResetModels() {
   if (confirm('确定要重置为默认模型列表吗？这将丢失所有自定义修改。')) {
     resetModelOptions()
   }
+}
+
+// Settings export/import
+const settingsFileInputRef = ref<HTMLInputElement | null>(null)
+
+function onExportSettings() {
+  if (!confirm('确定要导出当前设置吗？')) {
+    return
+  }
+  const settings = {
+    googleApiKey: googleApiKey.value,
+    modelOptions: modelOptions.value,
+    concisePrompt: concisePrompt.value,
+    detailedPrompt: detailedPrompt.value,
+    novelPrompt: novelPrompt.value,
+    customPrompts: customPrompts.value,
+  }
+  const data = JSON.stringify(settings, null, 2)
+  const blob = new Blob([data], { type: 'application/json' })
+  const url = URL.createObjectURL(blob)
+  const a = document.createElement('a')
+  a.href = url
+  a.download = `settings-${Date.now()}.json`
+  a.click()
+  URL.revokeObjectURL(url)
+}
+
+function onImportSettingsClick() {
+  if (!confirm('导入设置将覆盖当前所有设置，确定要继续吗？')) {
+    return
+  }
+  settingsFileInputRef.value?.click()
+}
+
+function onImportSettingsFile(event: Event) {
+  const input = event.target as HTMLInputElement
+  const file = input.files?.[0]
+  if (!file)
+    return
+
+  const reader = new FileReader()
+  reader.onload = () => {
+    try {
+      const data = JSON.parse(reader.result as string)
+      if (typeof data !== 'object' || data === null) {
+        alert('导入失败：文件格式不正确')
+        return
+      }
+      if (data.googleApiKey !== undefined)
+        googleApiKey.value = data.googleApiKey
+      if (Array.isArray(data.modelOptions))
+        modelOptions.value = data.modelOptions
+      if (data.concisePrompt !== undefined)
+        concisePrompt.value = data.concisePrompt
+      if (data.detailedPrompt !== undefined)
+        detailedPrompt.value = data.detailedPrompt
+      if (data.novelPrompt !== undefined)
+        novelPrompt.value = data.novelPrompt
+      if (data.customPrompts !== undefined)
+        customPrompts.value = data.customPrompts
+      alert('设置导入成功')
+    }
+    catch {
+      alert('导入失败：文件解析错误')
+    }
+  }
+  reader.readAsText(file)
+  input.value = ''
 }
 </script>
 
@@ -314,4 +383,23 @@ function handleResetModels() {
     自定义模式 Prompt
   </span>
   <Textarea v-model="customPrompts" placeholder="也许你需要第四个 prompt ，留空将不启用......" />
+
+  <div py-3 />
+  <!-- <span label ml-0.5>
+    设置管理
+  </span> -->
+  <Button @click="onImportSettingsClick">
+    导入设置
+  </Button>
+  <div py-2 />
+  <Button @click="onExportSettings">
+    导出设置
+  </Button>
+  <input
+    ref="settingsFileInputRef"
+    type="file"
+    accept=".json"
+    hidden
+    @change="onImportSettingsFile"
+  >
 </template>
