@@ -1,23 +1,14 @@
 <script setup lang="ts">
-import { useRoute, useRouter } from 'vue-router'
+import { useRouter } from 'vue-router'
 import { toggleDark } from '~/logic'
 
 const router = useRouter()
-const route = useRoute()
 </script>
 
 <template>
   <header w-full flex items-center justify-end p-8>
     <nav text-xl inline-flex gap-4>
       <button
-        v-if="route.path !== '/favorites'"
-        icon-btn title="Favorites"
-        @click="router.push('/favorites')"
-      >
-        <div i-carbon-bookmark />
-      </button>
-      <button
-        v-else
         icon-btn title="Home"
         @click="router.push('/')"
       >
@@ -25,18 +16,17 @@ const route = useRoute()
       </button>
 
       <button
-        v-if="route.path !== '/settings'"
+        icon-btn title="Favorites"
+        @click="router.push('/favorites')"
+      >
+        <div i-carbon-bookmark />
+      </button>
+
+      <button
         icon-btn title="Settings"
         @click="router.push('/settings')"
       >
         <div i-carbon-settings />
-      </button>
-      <button
-        v-else
-        icon-btn title="Home"
-        @click="router.push('/')"
-      >
-        <div i-carbon-home />
       </button>
 
       <a
