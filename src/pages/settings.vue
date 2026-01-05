@@ -45,7 +45,6 @@ function clearPrompt(mode: 0 | 1 | 2) {
   prompt.value = ''
 }
 
-// 模型管理
 const editingIndex = ref<number | null>(null)
 const editingValue = ref('')
 const isAdding = ref(false)

@@ -41,6 +41,58 @@ function onDeleteAll() {
   favoriteResults.data.value = []
   page.value = 1
 }
+
+function onExportAll() {
+  if (!favoriteResults.data.value || favoriteResults.data.value.length === 0) {
+    return
+  }
+  const data = JSON.stringify(favoriteResults.data.value, null, 2)
+  const blob = new Blob([data], { type: 'application/json' })
+  const url = URL.createObjectURL(blob)
+  const a = document.createElement('a')
+  a.href = url
+  a.download = `favorites-${Date.now()}.json`
+  a.click()
+  URL.revokeObjectURL(url)
+}
+
+const fileInputRef = ref<HTMLInputElement | null>(null)
+
+function onImportClick() {
+  fileInputRef.value?.click()
+}
+
+function onImportFile(event: Event) {
+  const input = event.target as HTMLInputElement
+  const file = input.files?.[0]
+  if (!file)
+    return
+
+  const reader = new FileReader()
+  reader.onload = () => {
+    try {
+      const data = JSON.parse(reader.result as string) as FavoriteResult[]
+      if (!Array.isArray(data)) {
+        alert('导入失败：文件格式不正确')
+        return
+      }
+      const existingTimes = new Set(favoriteResults.data.value?.map(item => item.time) ?? [])
+      const newItems = data.filter(item => !existingTimes.has(item.time))
+      if (newItems.length === 0) {
+        alert('没有新的收藏可导入')
+        return
+      }
+      favoriteResults.data.value = [...(favoriteResults.data.value ?? []), ...newItems]
+        .sort((a, b) => b.time - a.time)
+      alert(`成功导入 ${newItems.length} 条收藏`)
+    }
+    catch {
+      alert('导入失败：文件解析错误')
+    }
+  }
+  reader.readAsText(file)
+  input.value = ''
+}
 </script>
 
 <template>
@@ -84,10 +136,25 @@ function onDeleteAll() {
           />
         </TransitionGroup>
 
-        <div py-4 />
-        <Button @click="onDeleteAll">
+        <div py-2 />
+        <Button @click="onImportClick">
+          导入收藏
+        </Button>
+        <div py-2 />
+        <Button @click="onExportAll">
+          导出所有收藏
+        </Button>
+        <div py-2 />
+        <Button variant="danger" @click="onDeleteAll">
           删除所有收藏
         </Button>
+        <input
+          ref="fileInputRef"
+          type="file"
+          accept=".json"
+          hidden
+          @change="onImportFile"
+        >
       </template>
 
       <!-- empty -->
@@ -104,6 +171,16 @@ function onDeleteAll() {
             暂无收藏
           </div>
         </div>
+        <Button @click="onImportClick">
+          导入收藏
+        </Button>
+        <input
+          ref="fileInputRef"
+          type="file"
+          accept=".json"
+          hidden
+          @change="onImportFile"
+        >
       </template>
     </div>
   </Transition>

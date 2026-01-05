@@ -21,8 +21,6 @@ defineOptions({
 const image = ref<File | null>(null)
 const base64Image = ref<string | null>(null)
 
-// 新增：分析方式选项
-
 const concisePrompt = useStorage('concise-prompt', '')
 const detailedPrompt = useStorage('detailed-prompt', '')
 const novelPrompt = useStorage('novel-prompt', '')
@@ -47,7 +45,6 @@ const analyseMethodOptions = [
   { label: '使用 FileAPI 上传图片（适合大于20MB的图片）', value: 'api' },
 ]
 
-// 将模型字符串数组转换为 Select 组件需要的格式
 const modelSelectOptions = computed(() => {
   return modelOptions.value.map(model => ({ label: model, value: model }))
 })
@@ -99,7 +96,6 @@ async function handleAnalyseButtonClick() {
     }
 
     if (uploadType.value === 'api') {
-      // 上传图片
       const uploadedFile = await uploadFileToAPI(image.value)
       const contents = createUserContent([
         createPartFromUri(uploadedFile.uri!, uploadedFile.mimeType!),
@@ -110,7 +106,9 @@ async function handleAnalyseButtonClick() {
         contents,
         finalPrompt,
       )
-      lastImage = uploadedFile.uri!
+      // Save local base64 for favorites instead of remote URL
+      base64Image.value = await fileToBase64(image.value!)
+      lastImage = base64Image.value
     }
     else {
       base64Image.value = await fileToBase64(image.value!)

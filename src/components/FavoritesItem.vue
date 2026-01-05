@@ -47,8 +47,8 @@ function formatTime(ts: number) {
         <button
           type="button" title="Delete this item"
           p-1 rounded text-white
-          bg="red-700 hover:red-800"
-          transition-colors duration-200
+          bg="red-400 hover:red-500"
+          transition-colors duration-200 cursor-pointer
           @click="emit('delete')"
         >
           <div i-carbon-trash-can />
