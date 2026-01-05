@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import type { FavoriteResult } from '~/types'
-import { useMediaQuery } from '@vueuse/core'
+import { useMediaQuery, useStorage } from '@vueuse/core'
 import { useIDBKeyval } from '@vueuse/integrations/useIDBKeyval'
 import { computed, nextTick, ref } from 'vue'
 import Button from '~/components/Button.vue'
@@ -10,21 +10,43 @@ import Pagination from '~/components/Pagination.vue'
 const isMobile = useMediaQuery('(max-width: 768px)')
 
 const favoriteResults = useIDBKeyval<FavoriteResult[] | undefined>('favorite-results', undefined)
+const sortOrder = useStorage<'newest' | 'oldest'>('favorites-sort-order', 'newest')
+
+const sortedResults = computed(() => {
+  if (!favoriteResults.data.value)
+    return []
+  const sorted = [...favoriteResults.data.value]
+  if (sortOrder.value === 'oldest') {
+    sorted.sort((a, b) => a.time - b.time)
+  }
+  else {
+    sorted.sort((a, b) => b.time - a.time)
+  }
+  return sorted
+})
 
 const pageSize = 5
 const page = ref(1)
+const paginationRef = ref<InstanceType<typeof Pagination> | null>(null)
+const jumpInput = ref('')
+
+const pageCount = computed(() => Math.max(1, Math.ceil((favoriteResults.data.value?.length ?? 0) / pageSize)))
+
 const pagedResults = computed(() => {
-  if (!favoriteResults.data.value)
+  if (!sortedResults.value.length)
     return []
   const start = (page.value - 1) * pageSize
-  return favoriteResults.data.value.slice(start, start + pageSize)
+  return sortedResults.value.slice(start, start + pageSize)
 })
 
-function onDelete(idx: number) {
+function onDelete(time: number) {
   if (!confirm('确定要删除这个收藏吗？')) {
     return
   }
-  favoriteResults.data.value?.splice(idx, 1)
+  const idx = favoriteResults.data.value?.findIndex(item => item.time === time) ?? -1
+  if (idx !== -1) {
+    favoriteResults.data.value?.splice(idx, 1)
+  }
   nextTick(() => {
     const total = favoriteResults.data.value?.length ?? 0
     const maxPage = Math.max(1, Math.ceil(total / pageSize))
@@ -32,6 +54,18 @@ function onDelete(idx: number) {
       page.value = maxPage
     }
   })
+}
+
+function toggleSortOrder() {
+  sortOrder.value = sortOrder.value === 'newest' ? 'oldest' : 'newest'
+}
+
+function handleJump() {
+  const p = Number.parseInt(jumpInput.value, 10)
+  if (!Number.isNaN(p) && p >= 1 && p <= pageCount.value) {
+    page.value = p
+  }
+  jumpInput.value = ''
 }
 
 function onDeleteAll() {
@@ -119,20 +153,49 @@ function onImportFile(event: Event) {
 
       <!-- has data -->
       <template v-else-if="favoriteResults.data.value.length > 0">
-        <Pagination
-          v-model="page"
-          :page-size="pageSize"
-          :total="favoriteResults.data.value.length"
-        />
-        <div py-1 />
+        <div flex flex-col items-center gap-2>
+          <Pagination
+            ref="paginationRef"
+            v-model="page"
+            :page-size="pageSize"
+            :total="favoriteResults.data.value.length"
+          />
+          <div flex items-center gap-4>
+            <div v-if="pageCount > 5" flex items-center gap-1 text-sm>
+              <input
+                v-model="jumpInput"
+                type="text"
+                inputmode="numeric"
+                :placeholder="String(page)"
+                class="w-10 px-1 py-0.5 text-center rounded outline-none transition-colors duration-200 border border-base bg-light dark:bg-dark focus:border-teal-600"
+                @keyup.enter="handleJump"
+              >
+              <span opacity-60>/ {{ pageCount }}</span>
+            </div>
+            <button
+              type="button"
+              flex items-center gap-1 px-2 py-1
+              border="~ base rounded"
+              bg="light dark:dark"
+              text-sm cursor-pointer
+              hover:border-teal-600
+              transition-colors duration-200
+              @click="toggleSortOrder"
+            >
+              <div :class="sortOrder === 'newest' ? 'i-carbon-arrow-down' : 'i-carbon-arrow-up'" />
+              {{ sortOrder === 'newest' ? '最新' : '最旧' }}
+            </button>
+          </div>
+        </div>
+        <div py-2 />
 
         <TransitionGroup name="list" tag="div">
           <FavoritesItem
-            v-for="(item, idx) in pagedResults"
+            v-for="item in pagedResults"
             :key="item.time"
             :item="item"
             :is-mobile="isMobile"
-            @delete="onDelete((page - 1) * pageSize + idx)"
+            @delete="onDelete(item.time)"
           />
         </TransitionGroup>
 

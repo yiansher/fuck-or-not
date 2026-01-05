@@ -33,6 +33,8 @@ function goTo(page: number) {
   }
 }
 
+defineExpose({ pageCount, goTo })
+
 const pages = computed(() => {
   const total = pageCount.value
   const cur = currentPage.value ?? 1
@@ -67,7 +69,7 @@ const pages = computed(() => {
 </script>
 
 <template>
-  <nav flex items-center justify-center gap-2>
+  <nav flex items-center justify-center gap-1>
     <button
       :disabled="currentPage === 1"
       transition duration-200
@@ -84,10 +86,10 @@ const pages = computed(() => {
     <template v-for="p in pages" :key="p">
       <button
         v-if="typeof p === 'number'"
-        px-2 py-1 rounded text-sm
+        px-2 py-1 text-sm relative
         :class="[
           p === currentPage
-            ? 'text-teal-600 font-bold'
+            ? 'text-teal-600 font-bold current-page'
             : 'hover:text-teal-600 cursor-pointer',
         ]"
         :disabled="p === currentPage"
@@ -95,7 +97,7 @@ const pages = computed(() => {
       >
         {{ p }}
       </button>
-      <span v-else i-carbon-overflow-menu-horizontal px-2 opacity-50 select-none />
+      <span v-else text-xs opacity-50 select-none>...</span>
     </template>
     <button
       :disabled="currentPage === pageCount"
@@ -112,3 +114,17 @@ const pages = computed(() => {
     </button>
   </nav>
 </template>
+
+<style scoped>
+.current-page::after {
+  content: '';
+  position: absolute;
+  bottom: 2px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 60%;
+  height: 2px;
+  background-color: #0d9488;
+  border-radius: 1px;
+}
+</style>
