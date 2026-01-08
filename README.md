@@ -1,6 +1,7 @@
 # Fuck or Not
 
 基于 `Google Gemini AI` 的"上不上"图片分析网站。
+forked from Lu-Jiejie/fuck-or-not
 
 ## 使用
 
